@@ -10,6 +10,8 @@ public record PlaylistTrackResponse(
 		String title,
 		String artist,
 		String streamUrl,
+		String imageUrl,
+		Integer durationSeconds,
 		Integer position) {
 
 	public static PlaylistTrackResponse from(PlaylistTrack track) {
@@ -20,6 +22,8 @@ public record PlaylistTrackResponse(
 				track.getTitle(),
 				track.getArtist(),
 				track.getStreamUrl(),
+				track.getImageUrl(),
+				track.getDurationSeconds(),
 				track.getPosition());
 	}
 }

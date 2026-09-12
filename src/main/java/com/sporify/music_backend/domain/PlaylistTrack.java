@@ -46,6 +46,11 @@ public class PlaylistTrack {
 	@Column(nullable = false, length = 1024)
 	private String streamUrl;
 
+	@Column(length = 2048)
+	private String imageUrl;
+
+	private Integer durationSeconds;
+
 	@Column(nullable = false)
 	private Integer position;
 }

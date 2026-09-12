@@ -5,5 +5,6 @@ public record JamendoTrackResponse(
 		String title,
 		String artist,
 		String streamUrl,
-		String imageUrl) {
+		String imageUrl,
+		Integer durationSeconds) {
 }

@@ -4,5 +4,7 @@ public record AddTrackRequest(
 		String externalId,
 		String title,
 		String artist,
-		String streamUrl) {
+		String streamUrl,
+		String imageUrl,
+		Integer durationSeconds) {
 }
