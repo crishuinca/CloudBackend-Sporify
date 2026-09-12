@@ -40,6 +40,9 @@ public class Playlist {
 	@Column(nullable = false, length = 120)
 	private String name;
 
+	@Column(columnDefinition = "TEXT")
+	private String coverUrl;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private PlaylistType type;
