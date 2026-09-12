@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.sporify.music_backend.domain.Playlist;
 import com.sporify.music_backend.domain.PlaylistTrack;
@@ -16,4 +18,7 @@ public interface PlaylistTrackRepository extends JpaRepository<PlaylistTrack, Lo
 	Optional<PlaylistTrack> findByIdAndPlaylist(Long id, Playlist playlist);
 
 	boolean existsByPlaylistAndExternalIdAndSource(Playlist playlist, String externalId, TrackSource source);
+
+	@Query("select max(t.position) from PlaylistTrack t where t.playlist = :playlist")
+	Integer findMaxPosition(@Param("playlist") Playlist playlist);
 }
