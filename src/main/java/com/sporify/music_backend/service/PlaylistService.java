@@ -153,7 +153,7 @@ public class PlaylistService {
 
 	private static void assertCustom(Playlist playlist) {
 		if (playlist.getType() != PlaylistType.CUSTOM) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "La playlist de Me gusta no se puede editar así");
+			throw new ApiException(HttpStatus.BAD_REQUEST, "La playlist de Me gusta no se puede editar de esa forma");
 		}
 	}
 
