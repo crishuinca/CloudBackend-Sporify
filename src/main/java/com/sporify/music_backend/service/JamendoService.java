@@ -24,17 +24,16 @@ public class JamendoService {
 	private final String clientId;
 
 	public JamendoService(
-			RestClient.Builder restClientBuilder,
 			@Value("${sporify.jamendo.base-url}") String baseUrl,
 			@Value("${sporify.jamendo.client-id:}") String clientId) {
-		this.restClient = restClientBuilder.baseUrl(baseUrl).build();
+		this.restClient = RestClient.builder().baseUrl(baseUrl).build();
 		this.clientId = clientId;
 	}
 
 	public List<JamendoTrackResponse> search(String query, int limit) {
 		if (clientId == null || clientId.isBlank()) {
 			throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
-					"Configurá sporify.jamendo.client-id (client_id de Jamendo)");
+					"Configura sporify.jamendo.client-id (client_id de Jamendo)");
 		}
 		String q = query == null ? "" : query.trim();
 		if (q.isBlank()) {
