@@ -24,17 +24,16 @@ public class JamendoService {
 	private final String clientId;
 
 	public JamendoService(
-			RestClient.Builder restClientBuilder,
 			@Value("${sporify.jamendo.base-url}") String baseUrl,
 			@Value("${sporify.jamendo.client-id:}") String clientId) {
-		this.restClient = restClientBuilder.baseUrl(baseUrl).build();
+		this.restClient = RestClient.builder().baseUrl(baseUrl).build();
 		this.clientId = clientId;
 	}
 
 	public List<JamendoTrackResponse> search(String query, int limit) {
 		if (clientId == null || clientId.isBlank()) {
 			throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
-					"Configurá sporify.jamendo.client-id (client_id de Jamendo)");
+					"Configura sporify.jamendo.client-id (client_id de Jamendo)");
 		}
 		String q = query == null ? "" : query.trim();
 		if (q.isBlank()) {
@@ -49,6 +48,7 @@ public class JamendoService {
 							.queryParam("client_id", clientId)
 							.queryParam("format", "json")
 							.queryParam("limit", safeLimit)
+							.queryParam("imagesize", 300)
 							.queryParam("search", q)
 							.build())
 					.retrieve()
@@ -79,7 +79,8 @@ public class JamendoService {
 							text(item.get("name")),
 							text(item.get("artist_name")),
 							text(item.get("audio")),
-							firstImage(item)));
+							firstImage(item),
+							seconds(item.get("duration"))));
 				}
 			}
 		}
@@ -92,6 +93,21 @@ public class JamendoService {
 			return album;
 		}
 		return text(item.get("image"));
+	}
+
+	private static Integer seconds(Object value) {
+		if (value instanceof Number number) {
+			return Math.max(0, number.intValue());
+		}
+		String text = text(value);
+		if (text == null) {
+			return null;
+		}
+		try {
+			return Math.max(0, (int) Double.parseDouble(text));
+		} catch (NumberFormatException ex) {
+			return null;
+		}
 	}
 
 	private static String text(Object value) {

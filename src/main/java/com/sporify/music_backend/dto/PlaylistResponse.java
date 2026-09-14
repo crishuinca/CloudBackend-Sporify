@@ -11,6 +11,7 @@ public record PlaylistResponse(
 		String name,
 		PlaylistType type,
 		Instant createdAt,
+		String coverUrl,
 		List<PlaylistTrackResponse> tracks) {
 
 	public static PlaylistResponse from(Playlist playlist, List<PlaylistTrackResponse> tracks) {
@@ -19,6 +20,7 @@ public record PlaylistResponse(
 				playlist.getName(),
 				playlist.getType(),
 				playlist.getCreatedAt(),
+				playlist.getCoverUrl(),
 				tracks);
 	}
 

@@ -58,7 +58,7 @@ public class PlaylistController {
 			@AuthenticationPrincipal Jwt jwt,
 			@PathVariable Long id,
 			@RequestBody UpdatePlaylistRequest request) {
-		return playlistService.rename(jwt, id, request);
+		return playlistService.update(jwt, id, request);
 	}
 
 	@DeleteMapping("/{id}")

@@ -61,10 +61,24 @@ public class PlaylistService {
 	}
 
 	@Transactional
-	public PlaylistResponse rename(Jwt jwt, Long playlistId, UpdatePlaylistRequest request) {
+	public PlaylistResponse update(Jwt jwt, Long playlistId, UpdatePlaylistRequest request) {
 		Playlist playlist = ownedPlaylist(jwt, playlistId);
 		assertCustom(playlist);
-		playlist.setName(requiredName(request == null ? null : request.name()));
+		if (request == null) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "El cuerpo de la playlist es obligatorio");
+		}
+		boolean hasName = request.getName() != null && !request.getName().isBlank();
+		boolean hasCover = request.getCoverUrl() != null;
+		if (!hasName && !hasCover) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "Indica un nombre o una imagen");
+		}
+		if (hasName) {
+			playlist.setName(request.getName().trim());
+		}
+		if (hasCover) {
+			String cover = request.getCoverUrl().trim();
+			playlist.setCoverUrl(cover.isBlank() ? null : cover);
+		}
 		return PlaylistResponse.summary(playlist);
 	}
 
@@ -124,6 +138,8 @@ public class PlaylistService {
 		track.setTitle(title);
 		track.setArtist(artist);
 		track.setStreamUrl(streamUrl);
+		track.setImageUrl(optional(request.imageUrl()));
+		track.setDurationSeconds(request.durationSeconds());
 		track.setPosition(nextPosition);
 		playlist.getTracks().add(track);
 		return PlaylistTrackResponse.from(playlistTrackRepository.save(track));
@@ -153,7 +169,7 @@ public class PlaylistService {
 
 	private static void assertCustom(Playlist playlist) {
 		if (playlist.getType() != PlaylistType.CUSTOM) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "La playlist de Me gusta no se puede editar así");
+			throw new ApiException(HttpStatus.BAD_REQUEST, "La playlist de Me gusta no se puede editar de esa forma");
 		}
 	}
 
@@ -164,6 +180,13 @@ public class PlaylistService {
 	private static String required(String value, String field) {
 		if (value == null || value.isBlank()) {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "El campo " + field + " es obligatorio");
+		}
+		return value.trim();
+	}
+
+	private static String optional(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
 		}
 		return value.trim();
 	}
