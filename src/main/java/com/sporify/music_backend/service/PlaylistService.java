@@ -1,5 +1,6 @@
 package com.sporify.music_backend.service;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,10 @@ import com.sporify.music_backend.dto.CreatePlaylistRequest;
 import com.sporify.music_backend.dto.PlaylistResponse;
 import com.sporify.music_backend.dto.PlaylistTrackResponse;
 import com.sporify.music_backend.dto.UpdatePlaylistRequest;
+import com.sporify.music_backend.messaging.SporifyEventPublisher;
+import com.sporify.music_backend.messaging.event.LikesChangedEvent;
+import com.sporify.music_backend.messaging.event.NotificationEvent;
+import com.sporify.music_backend.messaging.event.PlaylistTrackAddedEvent;
 import com.sporify.music_backend.repository.PlaylistRepository;
 import com.sporify.music_backend.repository.PlaylistTrackRepository;
 import com.sporify.music_backend.web.ApiException;
@@ -27,14 +32,17 @@ public class PlaylistService {
 	private final CurrentUserService currentUserService;
 	private final PlaylistRepository playlistRepository;
 	private final PlaylistTrackRepository playlistTrackRepository;
+	private final SporifyEventPublisher eventPublisher;
 
 	public PlaylistService(
 			CurrentUserService currentUserService,
 			PlaylistRepository playlistRepository,
-			PlaylistTrackRepository playlistTrackRepository) {
+			PlaylistTrackRepository playlistTrackRepository,
+			SporifyEventPublisher eventPublisher) {
 		this.currentUserService = currentUserService;
 		this.playlistRepository = playlistRepository;
 		this.playlistTrackRepository = playlistTrackRepository;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -109,7 +117,21 @@ public class PlaylistService {
 	@Transactional
 	public void removeFromLikes(Jwt jwt, Long trackId) {
 		User user = currentUserService.getOrCreate(jwt);
-		removeTrack(currentUserService.likesPlaylist(user), trackId);
+		Playlist likes = currentUserService.likesPlaylist(user);
+		PlaylistTrack track = playlistTrackRepository.findByIdAndPlaylist(trackId, likes)
+				.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Pista no encontrada"));
+		String externalId = track.getExternalId();
+		String title = track.getTitle();
+		removeTrack(likes, trackId);
+		Instant now = Instant.now();
+		eventPublisher.publishLikesChanged(new LikesChangedEvent(
+				user.getId(), user.getAzureSub(), "REMOVED", trackId, externalId, title, now));
+		eventPublisher.publishNotification(new NotificationEvent(
+				user.getId(),
+				user.getAzureSub(),
+				"LIKES_REMOVED",
+				"Quitaste de Me gusta: " + title,
+				now));
 	}
 
 	@Transactional
@@ -142,7 +164,39 @@ public class PlaylistService {
 		track.setDurationSeconds(request.durationSeconds());
 		track.setPosition(nextPosition);
 		playlist.getTracks().add(track);
-		return PlaylistTrackResponse.from(playlistTrackRepository.save(track));
+		PlaylistTrack saved = playlistTrackRepository.save(track);
+
+		User user = playlist.getUser();
+		Instant now = Instant.now();
+		eventPublisher.publishTrackAdded(new PlaylistTrackAddedEvent(
+				playlist.getId(),
+				playlist.getName(),
+				user.getId(),
+				user.getAzureSub(),
+				saved.getId(),
+				saved.getExternalId(),
+				saved.getTitle(),
+				saved.getArtist(),
+				now));
+
+		if (playlist.getType() == PlaylistType.LIKES) {
+			eventPublisher.publishLikesChanged(new LikesChangedEvent(
+					user.getId(),
+					user.getAzureSub(),
+					"ADDED",
+					saved.getId(),
+					saved.getExternalId(),
+					saved.getTitle(),
+					now));
+			eventPublisher.publishNotification(new NotificationEvent(
+					user.getId(),
+					user.getAzureSub(),
+					"LIKES_ADDED",
+					"Agregaste a Me gusta: " + saved.getTitle(),
+					now));
+		}
+
+		return PlaylistTrackResponse.from(saved);
 	}
 
 	private void removeTrack(Playlist playlist, Long trackId) {
