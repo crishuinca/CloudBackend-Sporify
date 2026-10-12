@@ -8,7 +8,7 @@ import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -38,7 +38,8 @@ public class RabbitMqConfig {
 
 	@Bean
 	MessageConverter rabbitMessageConverter() {
-		return new Jackson2JsonMessageConverter();
+		// Spring Boot 4 / AMQP 4 → Jackson 3 (Jackson2JsonMessageConverter está deprecado)
+		return new JacksonJsonMessageConverter();
 	}
 
 	@Bean
