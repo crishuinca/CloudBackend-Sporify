@@ -36,8 +36,9 @@ public class KafkaErrorHandlingConfig {
 
 	@Bean
 	DefaultKafkaProducerFactoryCustomizer kafkaValueSerializer() {
+		// El constructor ya deja los type headers activos. No llamar setAddTypeInfo:
+		// Kafka vuelve a configurar el serializer con spring.json.add.type.headers y choca con el setter.
 		JacksonJsonSerializer<Object> json = new JacksonJsonSerializer<>();
-		json.setAddTypeInfo(true);
 		Map<Class<?>, Serializer<?>> byType = new LinkedHashMap<>();
 		byType.put(byte[].class, new ByteArraySerializer());
 		byType.put(PlaybackEvent.class, json);
